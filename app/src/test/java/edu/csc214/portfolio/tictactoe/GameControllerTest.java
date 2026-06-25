@@ -13,7 +13,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests complete application workflows coordinated by {@link GameController}.
+ * Tests complete single-game workflows coordinated by {@link GameController}.
  *
  * <p>The tests verify terminal starting states, normal alternation, invalid
  * retries, victories, draws, display timing, and isolation of engine state from
@@ -37,7 +37,7 @@ class GameControllerTest {
 
         new GameController(engine, view, firstPlayer, secondPlayer).playGame();
 
-        assertEquals(List.of("welcome", "board", "outcome:PLAYER_ONE_WINS"), view.events);
+        assertEquals(List.of("board", "outcome:PLAYER_ONE_WINS"), view.events);
         assertTrue(view.displayedTurns.isEmpty());
         assertTrue(view.moveResults.isEmpty());
         assertEquals(1, view.displayedBoards.size());
@@ -61,7 +61,6 @@ class GameControllerTest {
         new GameController(engine, view, firstPlayer, secondPlayer).playGame();
 
         assertEquals(List.of(
-                "welcome",
                 "board",
                 "turn:Alex",
                 "result:PLACED",
@@ -89,7 +88,7 @@ class GameControllerTest {
     }
 
     @Test
-    void occupiedMoveRepeatsSamePlayerAndDoesNotRedisplayBoard() {
+    void occupiedMoveRepeatsSamePlayerAndRedisplaysUnchangedBoard() {
         Player firstPlayer = scriptedPlayer("Alex", CellState.PLAYER_ONE, 1, 2, 3);
         Player secondPlayer = scriptedPlayer("Jordan", CellState.PLAYER_TWO, 1, 4, 5);
         GameEngine engine = createEngine(new GridBoard(3, 3), firstPlayer, secondPlayer);
@@ -106,7 +105,8 @@ class GameControllerTest {
                 MoveStatus.PLACED,
                 MoveStatus.PLACED), statusesOf(view.moveResults));
 
-        assertEquals(6, view.displayedBoards.size());
+        assertEquals(7, view.displayedBoards.size());
+        assertBoardsMatch(view.displayedBoards.get(1), view.displayedBoards.get(2));
         assertEquals(GameOutcome.PLAYER_ONE_WINS, view.outcome);
     }
 
@@ -189,6 +189,23 @@ class GameControllerTest {
         assertSame(secondPlayer, view.outcomeSecondPlayer);
     }
 
+    @Test
+    void singleGameControllerDoesNotDisplaySessionMessages() {
+        Board board = new GridBoard(3, 3);
+        board.place(new Position(0, 0), CellState.PLAYER_ONE);
+        board.place(new Position(0, 1), CellState.PLAYER_ONE);
+        board.place(new Position(0, 2), CellState.PLAYER_ONE);
+
+        Player firstPlayer = unusedPlayer("Alex", CellState.PLAYER_ONE);
+        Player secondPlayer = unusedPlayer("Jordan", CellState.PLAYER_TWO);
+        RecordingGameView view = new RecordingGameView();
+
+        new GameController(createEngine(board, firstPlayer, secondPlayer), view, firstPlayer, secondPlayer).playGame();
+
+        assertTrue(!view.events.contains("welcome"));
+        assertTrue(!view.events.contains("goodbye"));
+    }
+
     // Exception
 
     @Test
@@ -237,6 +254,18 @@ class GameControllerTest {
         return turnResults.stream().map(result -> result.moveResolution().status()).toList();
     }
 
+    private static void assertBoardsMatch(Board expected, Board actual) {
+        assertEquals(expected.getRowCount(), actual.getRowCount());
+        assertEquals(expected.getColumnCount(), actual.getColumnCount());
+
+        for (int row = 0; row < expected.getRowCount(); row++) {
+            for (int column = 0; column < expected.getColumnCount(); column++) {
+                Position position = new Position(row, column);
+                assertEquals(expected.getCell(position), actual.getCell(position));
+            }
+        }
+    }
+
     private static final class RecordingGameView implements GameView {
         private final List<String> events = new ArrayList<>();
         private final List<Board> displayedBoards = new ArrayList<>();
@@ -275,6 +304,11 @@ class GameControllerTest {
             outcomeFirstPlayer = firstPlayer;
             outcomeSecondPlayer = secondPlayer;
             events.add("outcome:" + outcome);
+        }
+
+        @Override
+        public void displayGoodbye() {
+            events.add("goodbye");
         }
     }
 }

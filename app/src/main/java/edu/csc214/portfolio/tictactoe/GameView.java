@@ -17,4 +17,6 @@ public interface GameView {
     void displayMoveResult(TurnResult turnResult);
 
     void displayOutcome(GameOutcome outcome, Player firstPlayer, Player secondPlayer);
+
+    void displayGoodbye();
 }

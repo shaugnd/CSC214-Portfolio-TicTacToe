@@ -8,20 +8,20 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Supplies human-player moves through a text-based input stream.
+ * Supplies human-player moves and replay decisions through text-based input.
  *
  * <p>The production constructor uses standard input and output. The injected
  * constructor allows tests or alternate text interfaces to provide controlled
  * readers and writers without replacing global system streams.</p>
  */
-public final class ConsoleMoveSource implements MoveSource {
-     // This component validates only the format and range of the entered cell 
-     // number. Whether the selected cell is already occupied remains the 
-     // responsibility of MoveResolver and GameEngine.
-     
+public final class ConsoleMoveSource implements MoveSource, PlayAgainPrompt {
+    // This component validates only the format and range of the entered cell 
+    // number. Whether the selected cell is already occupied remains the 
+    // responsibility of MoveResolver and GameEngine.
     private final BufferedReader reader;
     private final PrintWriter writer;
     private final PositionMapper positionMapper;
@@ -62,6 +62,32 @@ public final class ConsoleMoveSource implements MoveSource {
         }
     }
 
+    @Override
+    public boolean requestPlayAgain() {
+        while (true) {
+            writer.print("Would you like to play again (yes/no)? ");
+            writer.flush();
+
+            String input = readLine();
+
+            if (input == null) {
+                throw new IllegalStateException("Input ended before a replay decision was entered.");
+            }
+
+            String response = input.strip().toLowerCase(Locale.ROOT);
+
+            if (response.equals("yes")) {
+                return true;
+            }
+
+            if (response.equals("no")) {
+                return false;
+            }
+
+            writer.println("That is not a valid entry!");
+        }
+    }
+
     private String readLine() {
         try {
             return reader.readLine();
@@ -70,6 +96,3 @@ public final class ConsoleMoveSource implements MoveSource {
         }
     }
 }
-
-
-

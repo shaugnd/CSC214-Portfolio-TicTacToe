@@ -9,7 +9,7 @@ import java.util.Objects;
 /**
  * Presents Tic-Tac-Toe through a text-based interface.
  *
- * <p>The view delegats board rendering and player-symbol selection to injected
+ * <p>The view delegates board rendering and player-symbol selection to injected
  * collaborators. It does not read input, change game state, or evaluate game
  * rules.</p>
  */
@@ -57,7 +57,6 @@ public final class ConsoleGameView implements GameView {
         // that professor might have some sort of turn forfeiting functionality so
         // we might need a future status and still be able toproduce a readable fallback
         // rather than forcing a class change right out of the gate.
-        
         Objects.requireNonNull(turnResult, "Turn result cannot be null.");
 
         MoveStatus status = turnResult.moveResolution().status();
@@ -90,6 +89,11 @@ public final class ConsoleGameView implements GameView {
         };
 
         writer.println(message);
+    }
+
+    @Override
+    public void displayGoodbye() {
+        writer.println("Goodbye!");
     }
 
     private static String formatStatus(MoveStatus status) {

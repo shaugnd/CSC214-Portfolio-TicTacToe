@@ -193,6 +193,16 @@ class ConsoleGameViewTest {
                 + "Choose a numbered cell to place your mark." + LINE, output.toString());
     }
 
+    @Test
+    void displaysGoodbyeMessage() {
+        StringWriter output = new StringWriter();
+        GameView view = createView(output);
+
+        view.displayGoodbye();
+
+        assertEquals("Goodbye!" + LINE, output.toString());
+    }
+
     // Exception
 
     @Test
@@ -248,3 +258,4 @@ class ConsoleGameViewTest {
         return new HumanPlayer(name, state, (ignoredPlayer, ignoredBoard) -> new Position(0, 0));
     }
 }
+
