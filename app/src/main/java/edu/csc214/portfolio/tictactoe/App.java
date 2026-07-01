@@ -8,7 +8,6 @@ package edu.csc214.portfolio.tictactoe;
  * dedicated classes.</p>
  */
 public final class App {
-
     private App() {
     }
 
@@ -17,18 +16,43 @@ public final class App {
         GameView gameView = new ConsoleGameView();
 
         GameControllerFactory gameControllerFactory = () -> {
-            Player firstPlayer = new HumanPlayer("Player 1", CellState.PLAYER_ONE, consoleInput);
-            Player secondPlayer = new HumanPlayer("Player 2", CellState.PLAYER_TWO, consoleInput);
-
+            GameType gameType = consoleInput.requestGameType();
             Board board = new GridBoard(3, 3);
             GameRules rules = new ClassicTicTacToeRules();
             MoveResolver moveResolver = new StandardMoveResolver();
-            GameEngine gameEngine = new GameEngine(board, rules, moveResolver, firstPlayer, secondPlayer);
+
+            Player firstPlayer;
+            Player secondPlayer;
+
+            switch (gameType) {
+                case HUMAN_VS_HUMAN -> {
+                    firstPlayer = new HumanPlayer("Player 1", CellState.PLAYER_ONE, consoleInput);
+                    secondPlayer = new HumanPlayer("Player 2", CellState.PLAYER_TWO, consoleInput);
+                }
+                case HUMAN_VS_COMPUTER -> {
+                    firstPlayer = new HumanPlayer("Player 1", CellState.PLAYER_ONE, consoleInput);
+                    secondPlayer = new OpportunisticComputerPlayer("Computer", CellState.PLAYER_TWO, rules);
+                }
+                case COMPUTER_VS_HUMAN -> {
+                    firstPlayer = new OpportunisticComputerPlayer("Computer", CellState.PLAYER_ONE, rules);
+                    secondPlayer = new HumanPlayer("Player 2", CellState.PLAYER_TWO, consoleInput);
+                }
+                default -> throw new IllegalStateException("Unsupported game type: " + gameType);
+            }
+
+            GameEngine gameEngine = new GameEngine(
+                    board,
+                    rules,
+                    moveResolver,
+                    firstPlayer,
+                    secondPlayer);
 
             return new GameController(gameEngine, gameView, firstPlayer, secondPlayer);
         };
 
-        GameSessionController sessionController = new GameSessionController(gameControllerFactory, consoleInput, gameView);
+        GameSessionController sessionController =
+                new GameSessionController(gameControllerFactory, consoleInput, gameView);
+
         sessionController.playSession();
     }
 }
