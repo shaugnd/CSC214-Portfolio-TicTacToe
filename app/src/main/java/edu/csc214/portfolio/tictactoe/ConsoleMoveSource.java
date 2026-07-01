@@ -18,10 +18,12 @@ import java.util.Objects;
  * constructor allows tests or alternate text interfaces to provide controlled
  * readers and writers without replacing global system streams.</p>
  */
-public final class ConsoleMoveSource implements MoveSource, PlayAgainPrompt {
+public final class ConsoleMoveSource implements MoveSource, PlayAgainPrompt, GameTypePrompt {
     // This component validates only the format and range of the entered cell 
     // number. Whether the selected cell is already occupied remains the 
     // responsibility of MoveResolver and GameEngine.
+
+    // P2:  Added GameTypePrompt interface implementation.
     private final BufferedReader reader;
     private final PrintWriter writer;
     private final PositionMapper positionMapper;
@@ -58,6 +60,38 @@ public final class ConsoleMoveSource implements MoveSource, PlayAgainPrompt {
                 return positionMapper.toPosition(cellNumber, board);
             } catch (NumberFormatException | IndexOutOfBoundsException exception) {
                 writer.println("Please enter a whole number between 1 and " + cellCount + ".");
+            }
+        }
+    }
+
+    // P2:  Added Game Type Request to comply with GameTypePrompt contract.
+    
+    @Override
+    public GameType requestGameType() {
+        while (true) {
+            writer.println();
+            writer.println("Choose a game type:");
+            writer.println("1. Human vs. Human");
+            writer.println("2. Human vs. Computer");
+            writer.println("3. Computer vs. Human");
+            writer.print("Enter 1, 2, or 3: ");
+            writer.flush();
+
+            String input = readLine();
+
+            if (input == null) {
+                throw new IllegalStateException("Input ended before a game type was selected.");
+            }
+
+            switch (input.strip()) {
+                case "1":
+                    return GameType.HUMAN_VS_HUMAN;
+                case "2":
+                    return GameType.HUMAN_VS_COMPUTER;
+                case "3":
+                    return GameType.COMPUTER_VS_HUMAN;
+                default:
+                    writer.println("Please enter 1, 2, or 3.");
             }
         }
     }
